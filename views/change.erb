@@ -1,0 +1,13 @@
+<head>
+</head>
+<body>
+    <h1>Delegate to a different OpenID</h1>
+    <ul><%= @openids.count%>
+	<% for openid in @openids %>
+	    <li><%= openid[:openid]%></li>
+        <% end %>
+    </ul>
+    <form method="post" action="/change">
+	<div><button type="submit">Change</button></div>
+    </form>
+</body>
