@@ -1,52 +1,62 @@
 require 'rubygems'
 require 'sinatra'
+require 'configuration'
 
-FILE_NAME = Dir.pwd + '/tmp/' + 'current_openid.txt'
+class Openid
+	FILE_NAME = Dir.pwd + '/tmp/' + 'current_openid.txt'
+
+	def self.current
+		if File.exists?(FILE_NAME)
+			id = get_id_of_current_openid
+		else
+			write_default_id_to_file
+			id = 0
+		end
+
+		Configuration.openids.size > id ? Configuration.openids[id] : Configuration.openids.last
+	end
+
+	def self.change_current(id)
+		write_id_to_file(id) if id =~ /\d+/
+	end
+
+	private
+	
+	def self.get_id_of_current_openid
+		file = File.open(FILE_NAME, 'r')
+		id = file.gets
+		file.close
+		id.to_i
+	end
+
+	def self.write_default_id_to_file
+		default_id = 0
+		File.open(FILE_NAME, 'w') {|file| file.write(default_id) }
+	end
+
+	def self.write_id_to_file(id)
+		File.open(FILE_NAME, 'w') {|file| file.write(id) }
+	end
+end
 
 get '/' do
-    if File.exists?(FILE_NAME)
-	file = File.open(FILE_NAME, 'r')
-	selected_id = file.gets
-	file.close
-    else
-	selected_id = '0'
-	file = File.new(FILE_NAME, 'w')
-	file.putc(selected_id)
-	file.close
-    end
-    
-    @openid = openids[selected_id.to_i]
-    erb :index
+	if Configuration.openids.size > 0
+		@openid = Openid.current
+		erb :index
+	else
+		erb :no_openids
+	end
 end
 
 get '/change' do
-    @openids = openids
-    erb :change
+	redirect '/' if Configuration.openids.size <= 1
+	@current_openid = Openid.current
+	@openids = Configuration.openids
+	erb :change
 end
 
 post '/change' do
-    if File.exists?(FILE_NAME)
-	file = File.open(FILE_NAME, 'r')
-	selected_id = file.gets.to_i
-	file.close
-	
-	if selected_id == openids.count - 1
-	    selected_id = '0'
-	else
-	    selected_id = (selected_id + 1).to_s
-	end
-    else
-	selected_id = 0;
-    end
+	Openid.change_current(params[:openid_id])
 
-    file = File.open(FILE_NAME, 'w+')
-    file.putc(selected_id)
-    file.close
-    
-    redirect '/'
-end
-
-def openids
-    [{:server => 'http://www.myopenid.com/server', :openid => 'http://dh.myopenid.com'},
-     {:server => 'http://pip.verisignlabs.com/server', :openid => 'http://dho.pip.verisignlabs.com'}]
+	redirect '/'
 end

@@ -1,13 +1,19 @@
 <head>
+	<title>Delegate to a different OpenID</title>
 </head>
 <body>
-    <h1>Delegate to a different OpenID</h1>
-    <ul>
-	<% for openid in @openids %>
-	    <li><%= openid[:openid]%></li>
-        <% end %>
-    </ul>
-    <form method="post" action="/change">
-	<div><button type="submit">Change</button></div>
-    </form>
+	<h1>Delegate to a different OpenID</h1>
+	<form method="post" action="/change">
+		<% id = 0 %>
+		<% for openid in @openids %>
+			<div>
+				<input type="radio" name="openid_id" value="<%= id%>" <% if @current_openid[:openid] == openid[:openid] %>checked="checked"<% end %>>
+				<%= openid[:openid]%></input>
+			</div>
+			<% id += 1 %>
+		<% end %>
+		<div>
+			<button type="submit">Change</button>
+		</div>
+	</form>
 </body>
